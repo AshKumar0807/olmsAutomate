@@ -73,12 +73,18 @@ def apply_leave():
     data = request.json
     leave_type = data.get('leave_type')
 
-    with lock:
-        driver.get("https://www.srmimthostel.net/olms/send_request")
-        time.sleep(2)  # wait for page to load
+    leave_type_map = {
+    "outpass": "outing",
+    "leaving": "leaving",
+    "maintenance": "maintenance"}
+    form_value = leave_type_map.get(leave_type)
 
-        # Select the radio button for leave type
-        leave_radio = driver.find_element(By.CSS_SELECTOR, f"input[name='apply_for'][value='{leave_type.lower()}']")
+    with lock:
+        driver.get("https://www.srmimthostel.net/olms/check_student_record")
+        time.sleep(2)  # Wait for page to load
+
+        # Select the radio button based on leave_type
+        leave_radio = driver.find_element(By.CSS_SELECTOR, f"input[name='apply_for'][value='{form_value}']")
         leave_radio.click()
         time.sleep(1)
 
@@ -88,15 +94,12 @@ def apply_leave():
             outing_from_time = data.get('outing_from_time')
             outing_to_time = data.get('outing_to_time')
 
-            # Validate required fields
             if not all([outing_visit, outing_reason, outing_from_time, outing_to_time]):
                 return jsonify({'error': 'Missing outing details'}), 400
 
-            driver.find_element(By.ID, "vv_outing_from_date").clear()
-            driver.find_element(By.ID, "vv_outing_from_date").send_keys(outing_from_time)
-
-            driver.find_element(By.ID, "vv_outing_to_date").clear()
-            driver.find_element(By.ID, "vv_outing_to_date").send_keys(outing_to_time)
+            # Set datetime via JavaScript to avoid picker interference
+            driver.execute_script(f"document.getElementById('vv_outing_from_date').value = '{outing_from_time}';")
+            driver.execute_script(f"document.getElementById('vv_outing_to_date').value = '{outing_to_time}';")
 
             driver.find_element(By.NAME, "outing_visit").clear()
             driver.find_element(By.NAME, "outing_visit").send_keys(outing_visit)
@@ -110,11 +113,8 @@ def apply_leave():
             reason = data.get('reason', '')
             visit_to = data.get('visit_to', '')
 
-            driver.find_element(By.ID, "dates1").clear()
-            driver.find_element(By.ID, "dates1").send_keys(from_date)
-
-            driver.find_element(By.ID, "dates2").clear()
-            driver.find_element(By.ID, "dates2").send_keys(to_date)
+            driver.execute_script(f"document.getElementById('dates1').value = '{from_date}';")
+            driver.execute_script(f"document.getElementById('dates2').value = '{to_date}';")
 
             driver.find_element(By.NAME, "leaving_visit").clear()
             driver.find_element(By.NAME, "leaving_visit").send_keys(visit_to)
@@ -147,12 +147,11 @@ def apply_leave():
 
         # Submit the form
         submit_btn = driver.find_element(By.CSS_SELECTOR, "input.confirm-btn[value='Confirm']")
-
         submit_btn.click()
-
-        time.sleep(3)  # wait for submission to complete
+        time.sleep(3)
 
     return jsonify({"message": "Request applied successfully."})
+
 
 if __name__ == "__main__":
     app.run(debug=True)

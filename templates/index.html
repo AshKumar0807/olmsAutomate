@@ -48,43 +48,31 @@
         async function applyLeave() {
             try {
                 const leaveType = document.getElementById('leave_type').value;
-                // const fromDate = document.getElementById('from_date').value;
-                // const toDate = document.getElementById('to_date').value;
-                // const reason = document.getElementById('reason').value;
 
-                console.log({ leaveType, fromDate, toDate, reason });
+                if (leaveType !== 'outpass') {
+                    alert('Only Outpass is currently supported.');
+                    return;
+                }
 
-                if (!fromDate || !toDate) {
-                    alert('Please enter From and To dates');
+                const outingVisit = document.querySelector('.outing_visit')?.value;
+                const outingReason = document.querySelector('.outing_reason')?.value;
+                const outingFromTime = document.getElementById('vv_outing_from_date')?.value;
+                const outingToTime = document.getElementById('vv_outing_to_date')?.value;
+
+                console.log({ outingVisit, outingReason, outingFromTime, outingToTime });
+
+                if (!outingVisit || !outingReason || !outingFromTime || !outingToTime) {
+                    alert('Please fill all Outpass fields');
                     return;
                 }
 
                 const payload = {
-                    leave_type: leaveType,
-                    from_date: fromDate,
-                    to_date: toDate,
-                    reason: reason
+                    leave_type: 'outpass',
+                    outing_visit: outingVisit,
+                    outing_reason: outingReason,
+                    outing_from_time: outingFromTime.replace('T', ' '), // "YYYY-MM-DD HH:mm"
+                    outing_to_time: outingToTime.replace('T', ' ')
                 };
-
-                if (leaveType === 'Outpass') {
-                    const outingVisit = document.querySelector('outing_visit').value;
-                    const outingReason = document.querySelector('outing_reason').value;
-                    const outingFromTime = document.getElementById('vv_outing_from_date').value;
-                    const outingToTime = document.getElementById('vv_outing_to_date').value;
-
-                    console.log({ outingVisit, outingReason, outingFromTime, outingToTime });
-
-                    if (!outingVisit || !outingReason || !outingFromTime || !outingToTime) {
-                        alert('Please fill all Outpass fields');
-                        return;
-                    }
-
-
-                    payload.outing_visit = outingVisit;
-                    payload.outing_reason = outingReason;
-                    payload.outing_from_time = outingFromTime.replace('T', ' ');
-                    payload.outing_to_time = outingToTime.replace('T', ' ');
-                }
 
                 console.log('Payload:', payload);
 
@@ -104,6 +92,7 @@
                 } else {
                     alert(data.error);
                 }
+
             } catch (error) {
                 console.error('Error applying leave:', error);
                 alert('Something went wrong. Please try again.');
@@ -114,7 +103,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('leave_type').addEventListener('change', function () {
-                const isOutpass = this.value === 'Outpass';
+                const isOutpass = this.value === 'outpass';
                 document.getElementById('outpass-fields').style.display = isOutpass ? 'block' : 'none';
             });
         });
@@ -142,7 +131,7 @@
         <label for="leave_type">Leave Type:</label>
         <select id="leave_type" name="leave_type">
             <option value="Leave">Leave</option>
-            <option value="Outpass">Outpass</option>
+            <option value="outpass">Outpass</option>
         </select><br /><br />
 
         <!-- <label for="from_date">From Date (DD/MM/YYYY):</label>
