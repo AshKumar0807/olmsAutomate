@@ -3,6 +3,7 @@ from flask_cors import CORS
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 import threading
 import time
 import uuid
@@ -29,23 +30,28 @@ def login():
     session['session_id'] = session_id
     session['regno'] = reg_no
 
-    options = Options()
-    #options.add_argument('--headless')
-    options.add_argument('--headless')  # enable headless mode (mandatory in server)
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')  # fixes issues in small containers
-    options.add_argument('--remote-debugging-port=9222')
+    def run_selenium_login():
+        try:
+            options = Options()
+            options.add_argument('--headless')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--remote-debugging-port=9222')
 
-    driver = webdriver.Chrome(options=options)
-    driver.get("https://www.srmimthostel.net/olms")
-    driver.find_element(By.NAME, "reg_and_studid").send_keys(reg_no)
-    driver.find_element(By.NAME, "subval").click()
+            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+            driver.get("https://www.srmimthostel.net/olms")
+            driver.find_element(By.NAME, "reg_and_studid").send_keys(reg_no)
+            driver.find_element(By.NAME, "subval").click()
 
-    with driver_lock:
-        driver_sessions[session_id] = driver
+            with driver_lock:
+                driver_sessions[session_id] = driver
+        except Exception as e:
+            print(f"Selenium error: {e}")
 
-    return jsonify({"message": "OTP sent, please enter OTP to verify."})
+    threading.Thread(target=run_selenium_login).start()
+
+    return jsonify({"message": "Login initiated. Please wait a few seconds and then submit your OTP."})
 
 @app.route('/verify_otp', methods=['GET','POST'])
 def verify_otp():
