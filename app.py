@@ -13,7 +13,6 @@ lock = threading.Lock()
 
 @app.route('/')
 def home():
-    # Render a simple Ninja template with registration number and OTP form
     return render_template('index.html')
 
 @app.route('/start-login', methods=['POST'])
