@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>SRM OLMS Automation</title>
+    <script>
+        async function startLogin() {
+            const regno = document.getElementById('regno').value;
+            if (!regno) {
+                alert('Please enter your Registration Number');
+                return;
+            }
+            const response = await fetch('/start-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ regno })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                document.getElementById('otp-section').style.display = 'block';
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function verifyOtp() {
+            const otp = document.getElementById('otp').value;
+            if (!otp) {
+                alert('Please enter the OTP');
+                return;
+            }
+            const response = await fetch('/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ otp })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                document.getElementById('apply-section').style.display = 'block';
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function applyLeave() {
+            try {
+                const leaveType = document.getElementById('leave_type').value;
+                // const fromDate = document.getElementById('from_date').value;
+                // const toDate = document.getElementById('to_date').value;
+                // const reason = document.getElementById('reason').value;
+
+                console.log({ leaveType, fromDate, toDate, reason });
+
+                if (!fromDate || !toDate) {
+                    alert('Please enter From and To dates');
+                    return;
+                }
+
+                const payload = {
+                    leave_type: leaveType,
+                    from_date: fromDate,
+                    to_date: toDate,
+                    reason: reason
+                };
+
+                if (leaveType === 'Outpass') {
+                    const outingVisit = document.querySelector('outing_visit').value;
+                    const outingReason = document.querySelector('outing_reason').value;
+                    const outingFromTime = document.getElementById('vv_outing_from_date').value;
+                    const outingToTime = document.getElementById('vv_outing_to_date').value;
+
+                    console.log({ outingVisit, outingReason, outingFromTime, outingToTime });
+
+                    if (!outingVisit || !outingReason || !outingFromTime || !outingToTime) {
+                        alert('Please fill all Outpass fields');
+                        return;
+                    }
+
+
+                    payload.outing_visit = outingVisit;
+                    payload.outing_reason = outingReason;
+                    payload.outing_from_time = outingFromTime.replace('T', ' ');
+                    payload.outing_to_time = outingToTime.replace('T', ' ');
+                }
+
+                console.log('Payload:', payload);
+
+                const response = await fetch('/apply-leave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('Response status:', response.status);
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    alert(data.message);
+                } else {
+                    alert(data.error);
+                }
+            } catch (error) {
+                console.error('Error applying leave:', error);
+                alert('Something went wrong. Please try again.');
+            }
+        }
+
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('leave_type').addEventListener('change', function () {
+                const isOutpass = this.value === 'Outpass';
+                document.getElementById('outpass-fields').style.display = isOutpass ? 'block' : 'none';
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <h1>SRM OLMS Automation</h1>
+
+    <div>
+        <label for="regno">Registration Number:</label>
+        <input type="text" id="regno" name="regno" />
+        <button onclick="startLogin()">Send OTP</button>
+    </div>
+
+    <div id="otp-section" style="display:none; margin-top:20px;">
+        <label for="otp">Enter OTP:</label>
+        <input type="text" id="otp" name="otp" />
+        <button onclick="verifyOtp()">Verify OTP</button>
+    </div>
+
+    <div id="apply-section" style="display:none; margin-top:20px;">
+        <h2>Apply for Leave/Outpass</h2>
+
+        <label for="leave_type">Leave Type:</label>
+        <select id="leave_type" name="leave_type">
+            <option value="Leave">Leave</option>
+            <option value="Outpass">Outpass</option>
+        </select><br /><br />
+
+        <!-- <label for="from_date">From Date (DD/MM/YYYY):</label>
+        <input type="text" id="from_date" name="from_date" placeholder="DD/MM/YYYY" /><br /><br />
+
+        <label for="to_date">To Date (DD/MM/YYYY):</label>
+        <input type="text" id="to_date" name="to_date" placeholder="DD/MM/YYYY" /><br /><br />
+
+        <label for="reason">Reason:</label><br />
+        <textarea id="reason" name="reason" rows="4" cols="50"></textarea><br /><br /> -->
+
+        <!-- Outpass-specific fields -->
+        <div id="outpass-fields" style="display:none;">
+            <label for="vv_outing_from_date">Outing From:</label>
+            <input type="datetime-local" name="outing_from_date" id="vv_outing_from_date"
+                class="times outing_from_date"><br /><br />
+
+            <label for="vv_outing_to_date">Outing To:</label>
+            <input type="datetime-local" name="outing_to_date" id="vv_outing_to_date"
+                class="times outing_to_date"><br /><br />
+
+            <label for="outing_visit">Place of Visit:</label><br />
+            <textarea class="outing_visit" name="outing_visit" rows="2"
+                style="width:100%; padding:5px; box-sizing:border-box;"></textarea><br /><br />
+
+            <label for="outing_reason">Outing Reason:</label><br />
+            <textarea class="outing_reason" name="outing_reason" rows="2"
+                style="width:100%; padding:5px; box-sizing:border-box;"></textarea><br /><br />
+        </div>
+
+        <button onclick="applyLeave()">Apply</button>
+    </div>
+</body>
+
+</html>
