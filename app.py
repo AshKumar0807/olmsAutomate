@@ -10,7 +10,7 @@ import uuid
 import shutil
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Needed for session handling
+app.secret_key = 'ding_ding_ding'
 CORS(app)
 
 driver_sessions = {}
@@ -35,8 +35,8 @@ def login():
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.binary_location = "/usr/bin/chromium"#for docker
-    #options.binary_location = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" for mac
+    options.binary_location = "/usr/bin/chromium"#docker
+    #options.binary_location = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" mac
     chromedriver_path = shutil.which("chromedriver")
     service = Service(executable_path=chromedriver_path)
 
